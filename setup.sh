@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define packages
-packages="stow zsh neovim tmux git ripgrep fzf eza"
+packages="stow zsh neovim tmux git ripgrep fzf eza duf"
 stow_folders="zsh nvim tmux"
 
 # Install dependencies
