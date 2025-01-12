@@ -9,6 +9,10 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     # MacOS
     brew update
     brew install $packages
+elif [[ "$OSTYPE" == "android"* ]]; then
+    # Android
+    pkg update
+    pkg install -y $packages
 else
     # Linux
     sudo apt update
