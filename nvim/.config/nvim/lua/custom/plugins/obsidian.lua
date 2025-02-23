@@ -21,11 +21,38 @@ return {
 		workspaces = {
 			{
 				name = "personal",
-				-- path = "~/Library/Mobile Documents/com~apple~CloudDocs/Notes/Boby's Notes",
 				path = "/Users/bobysantoso/Library/Mobile Documents/iCloud~md~obsidian/Documents/Boby",
+			},
+			{
+				name = "riddlestory",
+				path = "/Users/bobysantoso/Library/Mobile Documents/iCloud~md~obsidian/Documents/RiddleStory",
 			},
 		},
 
 		-- see below for full list of options 👇
+	},
+	-- way then set 'mappings = {}'.
+	mappings = {
+		-- Overrides the 'gf' mapping to work on markdown/wiki links within your vault.
+		["gf"] = {
+			action = function()
+				return require("obsidian").util.gf_passthrough()
+			end,
+			opts = { noremap = false, expr = true, buffer = true },
+		},
+		-- Toggle check-boxes.
+		["<leader>mc"] = {
+			action = function()
+				return require("obsidian").util.toggle_checkbox()
+			end,
+			opts = { buffer = true },
+		},
+		-- Smart action depending on context, either follow link or toggle checkbox.
+		["<cr>"] = {
+			action = function()
+				return require("obsidian").util.smart_action()
+			end,
+			opts = { buffer = true, expr = true },
+		},
 	},
 }

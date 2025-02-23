@@ -112,6 +112,7 @@ alias rsf="cd ~/Projects/riddlestory/riddlestory/"
 alias rsb="cd ~/Projects/riddlestory/riddlestory-backend/"
 # alias oo="cd ~/Library/Mobile\ Documents/com~apple~CloudDocs/Notes/Boby\'s\ Notes"
 alias oo="cd /Users/bobysantoso/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/Boby"
+alias ors="cd /Users/bobysantoso/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/Riddlestory"
 alias dotfiles="cd ~/dotfiles/"
 alias ls="eza --icons --group-directories-first"
 
@@ -121,7 +122,7 @@ export NVM_DIR="$HOME/.nvm"
 
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
 export PATH=/opt/homebrew/bin:$PATH
-
+export TERM=xterm-256color
 [[ -f /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme ]] && source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
 [[ -f /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme ]] && source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
 

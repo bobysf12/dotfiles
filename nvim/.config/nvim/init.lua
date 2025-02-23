@@ -563,6 +563,22 @@ require("lazy").setup({
 					--  Most Language Servers support renaming across files, etc.
 					map("<leader>cr", vim.lsp.buf.rename, "Rename Variable")
 
+					-- Organize imports
+					map("<leader>co", function()
+						vim.lsp.buf.execute_command({
+							command = "_typescript.organizeImports",
+							arguments = { vim.api.nvim_buf_get_name(0) },
+						})
+					end, "Organize Imports")
+
+					-- Auto-import missing imports
+					map("<leader>cm", function()
+						vim.lsp.buf.code_action({
+							context = { only = { "source.addMissingImports.ts" } },
+							apply = true,
+						})
+					end, "Auto-import Missing Imports")
+
 					-- Execute a code action, usually your cursor needs to be on top of an error
 					-- or a suggestion from your LSP for this to activate.
 					map("<leader>ca", vim.lsp.buf.code_action, "Code Action", { "n", "x" })
@@ -650,7 +666,7 @@ require("lazy").setup({
 				--    https://github.com/pmizio/typescript-tools.nvim
 				--
 				-- But for many setups, the LSP (`ts_ls`) will work just fine
-				ts_ls = {},
+				-- ts_ls = {},
 				--
 				intelephense = {},
 
