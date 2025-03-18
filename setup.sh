@@ -2,7 +2,7 @@
 
 # Define packages
 packages="stow zsh neovim tmux git fzf eza duf fastfetch lazygit watson thefuck zoxide"
-stow_folders="zsh nvim tmux"
+stow_folders="zsh nvim tmux ghostty"
 
 # Install dependencies
 if [[ "$OSTYPE" == "darwin"* ]]; then
