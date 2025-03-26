@@ -1,4 +1,5 @@
 font-family                    = JetBrains Mono
 font-size                      = 18
 window-inherit-font-size       = true
+background-opacity = 0.95
 theme   = catppuccin-mocha

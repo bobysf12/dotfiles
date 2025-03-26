@@ -28,7 +28,9 @@ return {
 				path = "/Users/bobysantoso/Library/Mobile Documents/iCloud~md~obsidian/Documents/RiddleStory",
 			},
 		},
-
+		ui = {
+			enable = false,
+		},
 		-- see below for full list of options 👇
 	},
 	-- way then set 'mappings = {}'.
