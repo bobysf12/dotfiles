@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define packages
-packages="stow zsh neovim tmux git fzf eza duf fastfetch lazygit watson thefuck zoxide"
+packages="stow zsh neovim tmux git fzf eza duf fastfetch lazygit watson thefuck zoxide ripgrep slides"
 stow_folders="zsh nvim tmux ghostty"
 
 # Install dependencies

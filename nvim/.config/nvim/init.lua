@@ -200,6 +200,8 @@ vim.keymap.set("n", "<C-k>", "<C-w><C-k>", { desc = "Move focus to the upper win
 
 vim.keymap.set("n", "<leader>pv", "<cmd>Oil<CR>", { desc = "Open Explorer" })
 
+vim.keymap.set("x", "p", '"_dP')
+
 -- Keymap for splitting the window vertically
 vim.api.nvim_set_keymap("n", "<leader>wv", ":vsplit<CR>", { noremap = true, silent = true })
 
@@ -436,17 +438,13 @@ require("lazy").setup({
 			vim.keymap.set("n", "<leader>sw", builtin.grep_string, { desc = "[S]earch current [W]ord" })
 			vim.keymap.set("n", "<leader>sg", function()
 				builtin.live_grep({
-					additional_args = function()
-						return { "--hidden" }
+					additional_args = function(opts)
+						return { "--hidden", "--glob=!.git/" }
 					end,
-					file_ignore_patterns = {
-						"%.git/",
-						"node_modules/",
-					},
 				})
 			end, { desc = "[S]earch by [G]rep" })
 			vim.keymap.set("n", "<leader>sd", builtin.diagnostics, { desc = "[S]earch [D]iagnostics" })
-			vim.keymap.set("n", "<leader>sr", builtin.resume, { desc = "[S]earch [R]esume" })
+			-- vim.keymap.set("n", "<leader>sr", builtin.resume, { desc = "[S]earch [R]esume" })
 			vim.keymap.set("n", "<leader>s.", builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
 			vim.keymap.set("n", "<leader><leader>", builtin.buffers, { desc = "[ ] Find existing buffers" })
 			vim.keymap.set("n", "<leader>st", "<cmd>TodoTelescope<CR>", { desc = "[S]earch [T]odo" })
