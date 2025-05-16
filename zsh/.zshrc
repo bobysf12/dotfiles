@@ -82,6 +82,8 @@ plugins=(git nvm rsync ssh-agent zsh-autosuggestions zsh-syntax-highlighting)
 
 source $ZSH/oh-my-zsh.sh
 
+
+
 # User configuration
 
 # export MANPATH="/usr/local/man:$MANPATH"
@@ -133,3 +135,15 @@ export TERM=xterm-256color
 if [ -f ~/.zshenv ]; then
   source ~/.zshenv
 fi
+
+
+# Pyenv setup
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+
+# BIN path
+export PATH="$HOME/.local/bin:$PATH"
+

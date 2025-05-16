@@ -1,0 +1,9 @@
+["text/*"]
+default = ["nvim", "$1"]
+
+["application/json"]
+default = ["nvim", "$1"]
+
+[manager]
+# Set 'open' to use the default opener
+open = "default"
