@@ -4,6 +4,6 @@ default = ["nvim", "$1"]
 ["application/json"]
 default = ["nvim", "$1"]
 
-[mgr]
+[manager]
 # Set 'open' to use the default opener
 open = "default"
