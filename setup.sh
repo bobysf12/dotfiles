@@ -1,12 +1,18 @@
 #!/bin/bash
 
 # Define packages
-apt_packages="stow zsh neovim tmux git fzf ripgrep"
-non_apt_packages="eza duf fastfetch lazygit watson thefuck zoxide slides"
+packages="stow zsh neovim tmux git fzf eza duf fastfetch lazygit watson thefuck zoxide ripgrep slides"
+termux_packages="zsh neovim tmux git fzf zoxide ripgrep"
 stow_folders="zsh nvim tmux ghostty yazi tmux-sessionizer bin"
 
 # Install dependencies
-if [[ "$OSTYPE" == "darwin"* ]]; then
+if [[ -n "$PREFIX" ]] && [[ "$PREFIX" == *"com.termux"* ]]; then
+    # Termux
+    echo "Detected Termux environment"
+    pkg update
+    pkg install -y $termux_packages
+    echo "Note: Some packages (stow, eza, duf, fastfetch, lazygit, watson, thefuck, slides) are not available in Termux"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
     # MacOS
     brew update
     brew install $apt_packages $non_apt_packages
@@ -70,11 +76,21 @@ else
     fi
 fi
 
-# Stow configurations
-stow $stow_folders
+# Stow configurations (skip on Termux if stow not available)
+if [[ -n "$PREFIX" ]] && [[ "$PREFIX" == *"com.termux"* ]]; then
+    echo "Skipping stow on Termux - you'll need to manually symlink configs"
+    echo "Consider copying configs directly to their destinations"
+else
+    stow $stow_folders
+fi
 
-# Set Zsh as default shell
-chsh -s $(which zsh)
+# Set Zsh as default shell (skip on Termux)
+if [[ -n "$PREFIX" ]] && [[ "$PREFIX" == *"com.termux"* ]]; then
+    echo "On Termux, zsh is available but shell changing works differently"
+    echo "You can run 'zsh' to start zsh or set it up in your terminal app"
+else
+    chsh -s $(which zsh)
+fi
 
 echo "Dotfiles setup complete!"
 
