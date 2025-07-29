@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Define packages
-packages="stow zsh neovim tmux git fzf eza duf fastfetch lazygit watson thefuck zoxide ripgrep slides"
-termux_packages="zsh neovim tmux git fzf zoxide ripgrep"
+packages="stow zsh neovim tmux git fzf eza duf fastfetch lazygit watson thefuck zoxide ripgrep slides bat fd-find htop tree curl jq gh delta glow micro ncdu ranger"
+termux_packages="zsh neovim tmux git fzf zoxide ripgrep bat fd htop tree curl jq gh micro ncdu ranger openssh"
 stow_folders="zsh nvim tmux ghostty yazi tmux-sessionizer bin"
 
 # Install dependencies
@@ -84,6 +84,36 @@ else
     stow $stow_folders
 fi
 
+# Install Node.js via nvm
+echo "Installing nvm (Node Version Manager)..."
+if [[ -n "$PREFIX" ]] && [[ "$PREFIX" == *"com.termux"* ]]; then
+    # Termux: Install nvm
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+else
+    # Linux/macOS: Install nvm
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+fi
+
+# Install Python via pyenv
+echo "Installing pyenv (Python Version Manager)..."
+if [[ -n "$PREFIX" ]] && [[ "$PREFIX" == *"com.termux"* ]]; then
+    # Termux: Install pyenv dependencies and pyenv
+    pkg install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python3-openssl
+    curl https://pyenv.run | bash
+else
+    # Linux/macOS: Install pyenv
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS: pyenv available via brew
+        if ! command -v pyenv &> /dev/null; then
+            brew install pyenv
+        fi
+    else
+        # Linux: Install pyenv dependencies and pyenv
+        sudo apt install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python3-openssl git
+        curl https://pyenv.run | bash
+    fi
+fi
+
 # Set Zsh as default shell (skip on Termux)
 if [[ -n "$PREFIX" ]] && [[ "$PREFIX" == *"com.termux"* ]]; then
     echo "On Termux, zsh is available but shell changing works differently"
@@ -91,6 +121,17 @@ if [[ -n "$PREFIX" ]] && [[ "$PREFIX" == *"com.termux"* ]]; then
 else
     chsh -s $(which zsh)
 fi
+
+echo ""
+echo "=== Post-installation steps ==="
+echo "1. Restart your terminal or run: source ~/.bashrc (or ~/.zshrc)"
+echo "2. Install Node.js: nvm install --lts && nvm use --lts"
+echo "3. Install Python: pyenv install 3.11.0 && pyenv global 3.11.0"
+echo "4. Add to your shell config (~/.zshrc):"
+echo '   export NVM_DIR="$HOME/.nvm"'
+echo '   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"'
+echo '   export PATH="$HOME/.pyenv/bin:$PATH"'
+echo '   eval "$(pyenv init -)"'
 
 echo "Dotfiles setup complete!"
 
