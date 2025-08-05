@@ -124,7 +124,8 @@ export NVM_DIR="$HOME/.nvm"
 
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
 export PATH=/opt/homebrew/bin:$PATH:/Applications/Kitty.app/Contents/MacOS
-export TERM=xterm-256color
+# export TERM=xterm-256color
+# export TERM=xterm-kitty
 # [[ -f /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme ]] && source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
 # [[ -f /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme ]] && source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
 
@@ -147,3 +148,6 @@ eval "$(pyenv virtualenv-init -)"
 # BIN path
 export PATH="$HOME/.local/bin:$PATH"
 
+export PYENV_ROOT="$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
