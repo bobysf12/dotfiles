@@ -1,0 +1,287 @@
+#!/usr/bin/env bash
+
+set -e
+
+show_help() {
+    cat << EOF
+Timer - A simple command-line timer utility
+
+Usage: timer [OPTIONS] <duration>
+
+Duration formats:
+  - Seconds: 30, 30s
+  - Minutes: 5m, 10min
+  - Hours: 1h, 2hr
+  - Combined: 1h30m, 2h15m30s
+
+Options:
+  -h, --help       Show this help message
+  -m, --message    Custom message to display when timer ends
+  -s, --silent     Silent mode (no sound notification)
+  --sound SOUND    Sound type: beep, chime, bell, alarm, success (default: chime)
+
+Sound options:
+  beep     - System beep (default fallback)
+  chime    - Pleasant chime sound (default)
+  bell     - Bell sound
+  alarm    - Alarm-like sound
+  success  - Success/completion sound
+
+Examples:
+  timer 30              # 30 seconds with chime
+  timer 5m              # 5 minutes with chime
+  timer 1h30m           # 1 hour 30 minutes with chime
+  timer 25m -m "Break time!" --sound alarm
+  timer 2h -s           # Silent mode
+  timer 10m --sound success
+
+EOF
+}
+
+parse_duration() {
+    local duration="$1"
+    local total_seconds=0
+    
+    # Remove spaces
+    duration=$(echo "$duration" | tr -d ' ')
+    
+    # Parse hours
+    if [[ $duration =~ ([0-9]+)h ]]; then
+        local hours=${BASH_REMATCH[1]}
+        total_seconds=$((total_seconds + hours * 3600))
+        duration=${duration/${BASH_REMATCH[0]}/}
+    fi
+    
+    # Parse minutes
+    if [[ $duration =~ ([0-9]+)m(in)? ]]; then
+        local minutes=${BASH_REMATCH[1]}
+        total_seconds=$((total_seconds + minutes * 60))
+        duration=${duration/${BASH_REMATCH[0]}/}
+    fi
+    
+    # Parse seconds
+    if [[ $duration =~ ([0-9]+)s? ]]; then
+        local seconds=${BASH_REMATCH[1]}
+        total_seconds=$((total_seconds + seconds))
+    fi
+    
+    # If no units specified, assume seconds
+    if [[ $duration =~ ^[0-9]+$ ]]; then
+        total_seconds=$duration
+    fi
+    
+    echo $total_seconds
+}
+
+format_time() {
+    local seconds=$1
+    local hours=$((seconds / 3600))
+    local minutes=$(((seconds % 3600) / 60))
+    local secs=$((seconds % 60))
+    
+    if [[ $hours -gt 0 ]]; then
+        printf "%02d:%02d:%02d" $hours $minutes $secs
+    else
+        printf "%02d:%02d" $minutes $secs
+    fi
+}
+
+play_sound() {
+    local silent="$1"
+    local sound_type="$2"
+    
+    if [[ "$silent" == "true" ]]; then
+        return
+    fi
+    
+    # macOS sounds
+    if command -v osascript &> /dev/null; then
+        case "$sound_type" in
+            "chime")
+                osascript -e 'do shell script "afplay /System/Library/Sounds/Glass.aiff"' 2>/dev/null || \
+                osascript -e "beep"
+                ;;
+            "bell")
+                osascript -e 'do shell script "afplay /System/Library/Sounds/Tink.aiff"' 2>/dev/null || \
+                osascript -e "beep"
+                ;;
+            "alarm")
+                # Play multiple quick beeps for alarm effect
+                for i in {1..5}; do
+                    osascript -e "beep" &
+                    sleep 0.1
+                done
+                wait
+                ;;
+            "success")
+                osascript -e 'do shell script "afplay /System/Library/Sounds/Hero.aiff"' 2>/dev/null || \
+                osascript -e 'do shell script "afplay /System/Library/Sounds/Ping.aiff"' 2>/dev/null || \
+                osascript -e "beep"
+                ;;
+            "beep"|*)
+                osascript -e "beep"
+                ;;
+        esac
+        return
+    fi
+    
+    # Linux sounds
+    local sound_played=false
+    
+    case "$sound_type" in
+        "chime")
+            if command -v paplay &> /dev/null; then
+                paplay /usr/share/sounds/freedesktop/stereo/complete.oga 2>/dev/null || \
+                paplay /usr/share/sounds/ubuntu/stereo/bell.ogg 2>/dev/null || \
+                paplay /usr/share/sounds/freedesktop/stereo/bell.oga 2>/dev/null
+                sound_played=$?
+            fi
+            ;;
+        "bell")
+            if command -v paplay &> /dev/null; then
+                paplay /usr/share/sounds/freedesktop/stereo/bell.oga 2>/dev/null || \
+                paplay /usr/share/sounds/ubuntu/stereo/bell.ogg 2>/dev/null
+                sound_played=$?
+            fi
+            ;;
+        "alarm")
+            if command -v speaker-test &> /dev/null; then
+                # High pitched alarm-like tone
+                timeout 2s speaker-test -t sine -f 1000 -l 1 2>/dev/null
+                sound_played=$?
+            fi
+            ;;
+        "success")
+            if command -v paplay &> /dev/null; then
+                paplay /usr/share/sounds/freedesktop/stereo/complete.oga 2>/dev/null || \
+                paplay /usr/share/sounds/ubuntu/stereo/notification.ogg 2>/dev/null
+                sound_played=$?
+            fi
+            ;;
+    esac
+    
+    # Fallback for Linux if specific sound failed
+    if [[ $sound_played -ne 0 ]]; then
+        if command -v paplay &> /dev/null; then
+            paplay /usr/share/sounds/alsa/Front_Left.wav 2>/dev/null
+        elif command -v aplay &> /dev/null; then
+            aplay /usr/share/sounds/alsa/Front_Left.wav 2>/dev/null
+        elif command -v speaker-test &> /dev/null; then
+            timeout 1s speaker-test -t sine -f 800 -l 1 2>/dev/null
+        else
+            # Terminal bell fallback
+            case "$sound_type" in
+                "alarm")
+                    for i in {1..5}; do echo -e "\a"; sleep 0.1; done
+                    ;;
+                *)
+                    for i in {1..2}; do echo -e "\a"; sleep 0.2; done
+                    ;;
+            esac
+        fi
+    fi
+}
+
+send_notification() {
+    local message="$1"
+    local silent="$2"
+    local sound_type="$3"
+    
+    # Send visual notification
+    if command -v osascript &> /dev/null; then
+        # macOS - don't use sound name in notification since we handle sound separately
+        osascript -e "display notification \"$message\" with title \"Timer\""
+    elif command -v notify-send &> /dev/null; then
+        # Linux
+        notify-send -u critical "Timer" "$message"
+    else
+        # Fallback
+        echo -e "\n🔔 $message"
+    fi
+    
+    # Play sound
+    play_sound "$silent" "$sound_type"
+}
+
+main() {
+    local duration=""
+    local message="Time's up!"
+    local silent=false
+    local sound_type="chime"
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            -m|--message)
+                message="$2"
+                shift 2
+                ;;
+            -s|--silent)
+                silent=true
+                shift
+                ;;
+            --sound)
+                sound_type="$2"
+                if [[ ! "$sound_type" =~ ^(beep|chime|bell|alarm|success)$ ]]; then
+                    echo "Error: Invalid sound type '$sound_type'" >&2
+                    echo "Valid options: beep, chime, bell, alarm, success" >&2
+                    exit 1
+                fi
+                shift 2
+                ;;
+            -*)
+                echo "Unknown option: $1" >&2
+                exit 1
+                ;;
+            *)
+                if [[ -z "$duration" ]]; then
+                    duration="$1"
+                else
+                    echo "Multiple durations specified" >&2
+                    exit 1
+                fi
+                shift
+                ;;
+        esac
+    done
+    
+    # Check if duration is provided
+    if [[ -z "$duration" ]]; then
+        echo "Error: Duration is required" >&2
+        echo "Use 'timer --help' for usage information" >&2
+        exit 1
+    fi
+    
+    # Parse duration
+    local total_seconds
+    total_seconds=$(parse_duration "$duration")
+    
+    if [[ $total_seconds -eq 0 ]]; then
+        echo "Error: Invalid duration format" >&2
+        exit 1
+    fi
+    
+    # Start timer
+    echo "Timer started for $(format_time $total_seconds)"
+    echo "Press Ctrl+C to cancel"
+    echo
+    
+    # Countdown
+    for ((i=total_seconds; i>0; i--)); do
+        printf "\r⏱️  %s remaining" "$(format_time $i)"
+        sleep 1
+    done
+    
+    # Timer finished
+    printf "\r✅ Timer finished!                    \n"
+    send_notification "$message" "$silent" "$sound_type"
+}
+
+# Handle Ctrl+C gracefully
+trap 'echo -e "\n❌ Timer cancelled"; exit 0' INT
+
+main "$@"
