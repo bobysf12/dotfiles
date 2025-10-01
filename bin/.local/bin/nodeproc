@@ -1,0 +1,256 @@
+#!/usr/bin/env bash
+
+set -e
+
+show_help() {
+    cat << EOF
+NodeProc - Node.js and Bun process manager
+
+Usage: nodeproc [OPTIONS]
+
+Options:
+  -h, --help       Show this help message
+  -n, --node       Show only Node.js processes
+  -b, --bun        Show only Bun processes
+  -a, --all        Show all processes (default)
+
+Commands:
+  List all Node.js/Bun processes and provide options to kill them:
+  - Enter 'a' or 'all' to kill all processes
+  - Enter specific indices (comma-separated) to kill specific processes
+  - Enter 'q' or 'quit' to exit without killing anything
+
+Examples:
+  nodeproc         # List all Node.js and Bun processes
+  nodeproc -n      # List only Node.js processes
+  nodeproc -b      # List only Bun processes
+
+EOF
+}
+
+get_processes() {
+    local filter="$1"
+    
+    case "$filter" in
+        "node")
+            # Get Node.js processes
+            ps aux | grep -E '[n]ode|[n]pm|[n]px|[y]arn|[p]npm' | grep -v grep
+            ;;
+        "bun")
+            # Get Bun processes (more specific pattern)
+            ps aux | grep -E '[^/]bun[[:space:]]|/bun[[:space:]]|bun$' | grep -v grep
+            ;;
+        "all"|*)
+            # Get both Node.js and Bun processes
+            ps aux | grep -E '[n]ode|[n]pm|[n]px|[y]arn|[p]npm|[^/]bun[[:space:]]|/bun[[:space:]]|bun$' | grep -v grep
+            ;;
+    esac
+}
+
+format_process() {
+    local process="$1"
+    local index="$2"
+    
+    # Extract PID, command, and truncate for display
+    local pid=$(echo "$process" | awk '{print $2}')
+    local command=$(echo "$process" | awk '{for(i=11;i<=NF;i++) printf "%s ", $i; print ""}' | sed 's/[[:space:]]*$//')
+    
+    # Truncate command if too long
+    if [[ ${#command} -gt 80 ]]; then
+        command="${command:0:77}..."
+    fi
+    
+    printf "  %2d) PID %-6s %s\n" "$index" "$pid" "$command"
+}
+
+list_processes() {
+    local filter="$1"
+    local processes
+    
+    processes=$(get_processes "$filter")
+    
+    if [[ -z "$processes" ]]; then
+        case "$filter" in
+            "node")
+                echo "No Node.js processes found."
+                ;;
+            "bun")
+                echo "No Bun processes found."
+                ;;
+            *)
+                echo "No Node.js or Bun processes found."
+                ;;
+        esac
+        return 1
+    fi
+    
+    echo "Found processes:"
+    echo
+    
+    local index=1
+    while IFS= read -r process; do
+        [[ -n "$process" ]] && format_process "$process" "$index" && ((index++))
+    done <<< "$processes"
+    
+    return 0
+}
+
+get_pids() {
+    local filter="$1"
+    local processes
+    
+    processes=$(get_processes "$filter")
+    [[ -z "$processes" ]] && return 1
+    
+    while IFS= read -r process; do
+        [[ -n "$process" ]] && echo "$process" | awk '{print $2}'
+    done <<< "$processes"
+}
+
+kill_processes() {
+    local pids=("$@")
+    local killed=0
+    local failed=0
+    
+    for pid in "${pids[@]}"; do
+        if kill "$pid" 2>/dev/null; then
+            echo "✅ Killed process $pid"
+            ((killed++))
+        else
+            echo "❌ Failed to kill process $pid (may have already exited)"
+            ((failed++))
+        fi
+    done
+    
+    echo
+    echo "Summary: $killed killed, $failed failed"
+}
+
+prompt_action() {
+    local filter="$1"
+    
+    echo
+    echo "Actions:"
+    echo "  a, all     - Kill all listed processes"
+    echo "  1,2,3      - Kill specific processes by index (comma-separated)"
+    echo "  q, quit    - Exit without killing anything"
+    echo
+    
+    while true; do
+        read -p "Enter your choice: " choice
+        
+        case "$(echo "$choice" | tr '[:upper:]' '[:lower:]')" in
+            "q"|"quit"|"")
+                echo "Exiting without killing any processes."
+                return 0
+                ;;
+            "a"|"all")
+                echo "Killing all processes..."
+                local all_pids_str
+                all_pids_str=$(get_pids "$filter")
+                if [[ -n "$all_pids_str" ]]; then
+                    local all_pids=($all_pids_str)
+                    kill_processes "${all_pids[@]}"
+                else
+                    echo "No processes to kill."
+                fi
+                return 0
+                ;;
+            *[0-9]*)
+                # Parse comma-separated indices
+                IFS=',' read -ra indices <<< "$choice"
+                local selected_pids=()
+                local all_pids_str
+                all_pids_str=$(get_pids "$filter")
+                local all_pids=($all_pids_str)
+                
+                local valid=true
+                for index in "${indices[@]}"; do
+                    # Trim whitespace
+                    index=$(echo "$index" | tr -d ' ')
+                    
+                    # Check if it's a valid number
+                    if ! [[ "$index" =~ ^[0-9]+$ ]]; then
+                        echo "Error: '$index' is not a valid number"
+                        valid=false
+                        break
+                    fi
+                    
+                    # Check if index is in range
+                    if [[ "$index" -lt 1 || "$index" -gt ${#all_pids[@]} ]]; then
+                        echo "Error: Index $index is out of range (1-${#all_pids[@]})"
+                        valid=false
+                        break
+                    fi
+                    
+                    # Add PID to selection (convert to 0-based index)
+                    selected_pids+=("${all_pids[$((index-1))]}")
+                done
+                
+                if [[ "$valid" == true ]]; then
+                    if [[ ${#selected_pids[@]} -gt 0 ]]; then
+                        echo "Killing selected processes..."
+                        kill_processes "${selected_pids[@]}"
+                    else
+                        echo "No processes selected."
+                    fi
+                    return 0
+                else
+                    echo "Please try again."
+                fi
+                ;;
+            *)
+                echo "Invalid choice. Please enter 'a' for all, specific indices, or 'q' to quit."
+                ;;
+        esac
+    done
+}
+
+main() {
+    local filter="all"
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            -n|--node)
+                filter="node"
+                shift
+                ;;
+            -b|--bun)
+                filter="bun"
+                shift
+                ;;
+            -a|--all)
+                filter="all"
+                shift
+                ;;
+            -*)
+                echo "Unknown option: $1" >&2
+                echo "Use 'nodeproc --help' for usage information" >&2
+                exit 1
+                ;;
+            *)
+                echo "Unexpected argument: $1" >&2
+                echo "Use 'nodeproc --help' for usage information" >&2
+                exit 1
+                ;;
+        esac
+    done
+    
+    # List processes
+    if ! list_processes "$filter"; then
+        exit 0
+    fi
+    
+    # Prompt for action
+    prompt_action "$filter"
+}
+
+# Handle Ctrl+C gracefully
+trap 'echo -e "\n❌ Operation cancelled"; exit 0' INT
+
+main "$@"

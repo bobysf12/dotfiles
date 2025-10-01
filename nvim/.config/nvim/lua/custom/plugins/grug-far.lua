@@ -12,8 +12,8 @@ return {
 			-- be specified
 		})
 
-		vim.keymap.set({ "n", "i" }, "<leader>sr", function()
+		vim.keymap.set({ "n", "i" }, "<leader>gf", function()
 			grugFar.open()
-		end, { desc = "[S]earch [R]eplace" })
+		end, { desc = "[G]rug [F]ar - Search & Replace" })
 	end,
 }

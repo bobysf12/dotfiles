@@ -1,0 +1,316 @@
+#!/usr/bin/env bash
+
+set -e
+
+show_help() {
+    cat << EOF
+HEIC Convert - Convert HEIC files to JPEG or PNG format with compression
+
+Usage: heic-convert [OPTIONS] <input-file(s)>
+
+Options:
+  -h, --help         Show this help message
+  -f, --format       Output format: jpeg, jpg, png (default: jpeg)
+  -q, --quality      JPEG quality 1-100 (default: 90)
+  -r, --resize       Resize image percentage or WxH (e.g., 50%, 1920x1080)
+  -c, --compress     Compression level: light, medium, heavy (affects quality/size)
+  -o, --output       Output directory (default: same as input)
+  -s, --suffix       Add suffix to output filename (default: none)
+  --overwrite        Overwrite existing files without confirmation
+  --preserve-date    Preserve original file modification date
+
+Compression levels:
+  light  - High quality, moderate compression (quality: 85)
+  medium - Balanced quality and size (quality: 70)
+  heavy  - Maximum compression, lower quality (quality: 50)
+
+Examples:
+  heic-convert image.heic                    # Convert to JPEG with default quality
+  heic-convert *.heic -f png                 # Convert all HEIC files to PNG
+  heic-convert photo.heic -q 95 -o ~/Desktop # Convert with high quality to Desktop
+  heic-convert image.heic -c heavy           # Heavy compression for smaller files
+  heic-convert photo.heic -r 50%             # Resize to 50% of original size
+  heic-convert image.heic -r 1920x1080       # Resize to specific dimensions
+  heic-convert batch*.heic --overwrite       # Batch convert, overwrite existing
+
+Supported formats:
+  - JPEG/JPG: Good compression, adjustable quality
+  - PNG: Lossless compression, larger file size
+
+Requirements:
+  - macOS: Uses built-in 'sips' command
+  - Linux: Requires ImageMagick ('convert' command)
+
+EOF
+}
+
+check_dependencies() {
+    if command -v sips &> /dev/null; then
+        CONVERTER="sips"
+    elif command -v convert &> /dev/null; then
+        CONVERTER="imagemagick"
+    else
+        echo "Error: No suitable image converter found" >&2
+        echo "macOS: 'sips' should be available by default" >&2
+        echo "Linux: Install ImageMagick (sudo apt install imagemagick)" >&2
+        exit 1
+    fi
+}
+
+convert_with_sips() {
+    local input="$1"
+    local output="$2"
+    local format="$3"
+    local quality="$4"
+    local resize="$5"
+    
+    local sips_cmd="sips"
+    
+    if [[ -n "$resize" ]]; then
+        if [[ "$resize" =~ ^[0-9]+%$ ]]; then
+            local percent=${resize%\%}
+            sips_cmd="$sips_cmd -Z $(( $(sips -g pixelWidth "$input" | awk '{print $2}') * percent / 100 ))"
+        elif [[ "$resize" =~ ^[0-9]+x[0-9]+$ ]]; then
+            local width=${resize%x*}
+            local height=${resize#*x}
+            sips_cmd="$sips_cmd -z $height $width"
+        fi
+    fi
+    
+    case "$format" in
+        "jpeg"|"jpg")
+            eval "$sips_cmd -s format jpeg -s formatOptions $quality \"$input\" --out \"$output\"" &> /dev/null
+            ;;
+        "png")
+            eval "$sips_cmd -s format png \"$input\" --out \"$output\"" &> /dev/null
+            ;;
+    esac
+}
+
+convert_with_imagemagick() {
+    local input="$1"
+    local output="$2"
+    local format="$3"
+    local quality="$4"
+    local resize="$5"
+    
+    local convert_cmd="convert \"$input\""
+    
+    if [[ -n "$resize" ]]; then
+        if [[ "$resize" =~ ^[0-9]+%$ ]]; then
+            convert_cmd="$convert_cmd -resize $resize"
+        elif [[ "$resize" =~ ^[0-9]+x[0-9]+$ ]]; then
+            convert_cmd="$convert_cmd -resize $resize"
+        fi
+    fi
+    
+    case "$format" in
+        "jpeg"|"jpg")
+            eval "$convert_cmd -quality $quality \"$output\""
+            ;;
+        "png")
+            eval "$convert_cmd \"$output\""
+            ;;
+    esac
+}
+
+convert_file() {
+    local input="$1"
+    local output_dir="$2"
+    local format="$3"
+    local quality="$4"
+    local suffix="$5"
+    local overwrite="$6"
+    local preserve_date="$7"
+    local resize="$8"
+    
+    if [[ ! -f "$input" ]]; then
+        echo "Error: File '$input' not found" >&2
+        return 1
+    fi
+    
+    if [[ ! "$input" =~ \.(heic|HEIC)$ ]]; then
+        echo "Warning: '$input' doesn't appear to be a HEIC file, skipping" >&2
+        return 1
+    fi
+    
+    local basename=$(basename "$input" .heic)
+    basename=$(basename "$basename" .HEIC)
+    local output_file="$output_dir/${basename}${suffix}.${format}"
+    
+    if [[ -f "$output_file" ]] && [[ "$overwrite" != "true" ]]; then
+        echo -n "File '$output_file' already exists. Overwrite? (y/N): "
+        read -r response
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            echo "Skipping '$input'"
+            return 0
+        fi
+    fi
+    
+    local input_size=$(du -h "$input" | cut -f1)
+    echo "Converting: $(basename "$input") ($input_size) → $(basename "$output_file")"
+    
+    case "$CONVERTER" in
+        "sips")
+            convert_with_sips "$input" "$output_file" "$format" "$quality" "$resize"
+            ;;
+        "imagemagick")
+            convert_with_imagemagick "$input" "$output_file" "$format" "$quality" "$resize"
+            ;;
+    esac
+    
+    if [[ "$preserve_date" == "true" ]]; then
+        touch -r "$input" "$output_file"
+    fi
+    
+    local output_size=$(du -h "$output_file" | cut -f1)
+    local compression_ratio
+    local input_bytes=$(stat -f%z "$input" 2>/dev/null || stat -c%s "$input" 2>/dev/null)
+    local output_bytes=$(stat -f%z "$output_file" 2>/dev/null || stat -c%s "$output_file" 2>/dev/null)
+    
+    if [[ -n "$input_bytes" ]] && [[ -n "$output_bytes" ]] && [[ "$input_bytes" -gt 0 ]]; then
+        compression_ratio=$(( (input_bytes - output_bytes) * 100 / input_bytes ))
+        if [[ "$compression_ratio" -gt 0 ]]; then
+            echo "✅ Converted successfully ($output_size, ${compression_ratio}% smaller)"
+        else
+            echo "✅ Converted successfully ($output_size)"
+        fi
+    else
+        echo "✅ Converted successfully ($output_size)"
+    fi
+}
+
+main() {
+    local input_files=()
+    local format="jpeg"
+    local quality="90"
+    local output_dir=""
+    local suffix=""
+    local overwrite=false
+    local preserve_date=false
+    local resize=""
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            -f|--format)
+                format="$2"
+                if [[ ! "$format" =~ ^(jpeg|jpg|png)$ ]]; then
+                    echo "Error: Invalid format '$format'" >&2
+                    echo "Valid formats: jpeg, jpg, png" >&2
+                    exit 1
+                fi
+                shift 2
+                ;;
+            -q|--quality)
+                quality="$2"
+                if [[ ! "$quality" =~ ^[0-9]+$ ]] || [[ "$quality" -lt 1 ]] || [[ "$quality" -gt 100 ]]; then
+                    echo "Error: Quality must be a number between 1-100" >&2
+                    exit 1
+                fi
+                shift 2
+                ;;
+            -r|--resize)
+                resize="$2"
+                if [[ ! "$resize" =~ ^[0-9]+%$ ]] && [[ ! "$resize" =~ ^[0-9]+x[0-9]+$ ]]; then
+                    echo "Error: Invalid resize format '$resize'" >&2
+                    echo "Valid formats: percentage (50%) or dimensions (1920x1080)" >&2
+                    exit 1
+                fi
+                shift 2
+                ;;
+            -c|--compress)
+                local compress_level="$2"
+                case "$compress_level" in
+                    "light")
+                        quality="85"
+                        ;;
+                    "medium")
+                        quality="70"
+                        ;;
+                    "heavy")
+                        quality="50"
+                        ;;
+                    *)
+                        echo "Error: Invalid compression level '$compress_level'" >&2
+                        echo "Valid levels: light, medium, heavy" >&2
+                        exit 1
+                        ;;
+                esac
+                shift 2
+                ;;
+            -o|--output)
+                output_dir="$2"
+                if [[ ! -d "$output_dir" ]]; then
+                    echo "Error: Output directory '$output_dir' does not exist" >&2
+                    exit 1
+                fi
+                shift 2
+                ;;
+            -s|--suffix)
+                suffix="$2"
+                shift 2
+                ;;
+            --overwrite)
+                overwrite=true
+                shift
+                ;;
+            --preserve-date)
+                preserve_date=true
+                shift
+                ;;
+            -*)
+                echo "Unknown option: $1" >&2
+                echo "Use 'heic-convert --help' for usage information" >&2
+                exit 1
+                ;;
+            *)
+                input_files+=("$1")
+                shift
+                ;;
+        esac
+    done
+    
+    if [[ ${#input_files[@]} -eq 0 ]]; then
+        echo "Error: No input files specified" >&2
+        echo "Use 'heic-convert --help' for usage information" >&2
+        exit 1
+    fi
+    
+    check_dependencies
+    
+    local total_files=${#input_files[@]}
+    local converted=0
+    local failed=0
+    
+    echo "Using converter: $CONVERTER"
+    echo "Converting $total_files file(s) to $format format (quality: $quality)"
+    if [[ -n "$resize" ]]; then
+        echo "Resize: $resize"
+    fi
+    echo
+    
+    for input_file in "${input_files[@]}"; do
+        local file_output_dir="${output_dir:-$(dirname "$input_file")}"
+        
+        if convert_file "$input_file" "$file_output_dir" "$format" "$quality" "$suffix" "$overwrite" "$preserve_date" "$resize"; then
+            ((converted++))
+        else
+            ((failed++))
+        fi
+        echo
+    done
+    
+    echo "Conversion complete!"
+    echo "✅ Successfully converted: $converted"
+    if [[ $failed -gt 0 ]]; then
+        echo "❌ Failed: $failed"
+    fi
+}
+
+trap 'echo -e "\n❌ Conversion cancelled"; exit 0' INT
+
+main "$@"

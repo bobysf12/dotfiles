@@ -431,18 +431,8 @@ require("lazy").setup({
 						"[W]orkspace [S]ymbols"
 					)
 					map("<leader>cr", vim.lsp.buf.rename, "Rename Variable")
-					map("<leader>co", function()
-						vim.lsp.buf.execute_command({
-							command = "_typescript.organizeImports",
-							arguments = { vim.api.nvim_buf_get_name(0) },
-						})
-					end, "Organize Imports")
-					map("<leader>cm", function()
-						vim.lsp.buf.code_action({
-							context = { only = { "source.addMissingImports.ts" } },
-							apply = true,
-						})
-					end, "Auto-import Missing Imports")
+					map("<leader>co", "<cmd>TSToolsOrganizeImports<CR>", "Organize Imports")
+					map("<leader>cm", "<cmd>TSToolsAddMissingImports<CR>", "Auto-import Missing Imports")
 					map("<leader>ca", vim.lsp.buf.code_action, "Code Action", { "n", "x" })
 					map("gD", vim.lsp.buf.declaration, "[G]oto [D]eclaration")
 
@@ -495,13 +485,11 @@ require("lazy").setup({
 			--  - settings (table): Override the default settings passed when initializing the server.
 			--        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
 			local servers = {
-				ts_ls = {},
 				intelephense = {},
 				lua_ls = {
 					settings = {
 						Lua = {
 							completion = { callSnippet = "Replace" },
-							-- diagnostics = { disable = { "missing-fields" } },
 						},
 					},
 				},
@@ -521,6 +509,9 @@ require("lazy").setup({
 				ensure_installed = vim.tbl_keys(servers),
 				handlers = {
 					function(server_name)
+						if server_name == "ts_ls" then
+							return
+						end
 						local config = servers[server_name] or {}
 						config.capabilities = capabilities
 						require("lspconfig")[server_name].setup(config)

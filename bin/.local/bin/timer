@@ -107,7 +107,7 @@ play_sound() {
                 ;;
             "alarm")
                 # Play multiple quick beeps for alarm effect
-                for i in {1..5}; do
+                for i in {1..10}; do
                     osascript -e "beep" &
                     sleep 0.1
                 done
