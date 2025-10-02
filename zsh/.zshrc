@@ -126,6 +126,12 @@ export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/b
 export PATH=/opt/homebrew/bin:$PATH:/Applications/Kitty.app/Contents/MacOS
 # export TERM=xterm-256color
 # export TERM=xterm-kitty
+
+# Fix terminal compatibility for SSH (Ghostty term type not recognized by remote servers)
+if [[ "$TERM" == "xterm-ghostty" ]] && [[ -n "$SSH_CONNECTION" ]]; then
+  export TERM=xterm-256color
+fi
+
 # [[ -f /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme ]] && source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
 # [[ -f /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme ]] && source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
 
