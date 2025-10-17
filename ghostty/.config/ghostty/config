@@ -1,5 +1,5 @@
 font-family                    = IBM Plex Mono
-font-size                      = 18
+font-size                      = 16
 window-inherit-font-size       = true
-background-opacity = 0.95
+background-opacity = 0.92
 theme   = TokyoNight
