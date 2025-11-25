@@ -89,13 +89,6 @@ return {
 				border = "rounded",
 			},
 		},
-
-		-- PERFORMANCE: Fuzzy matching settings
-		fuzzy = {
-			use_typo_resistance = true,
-			use_frecency = true, -- Learn your most-used completions
-			use_proximity = true, -- Boost nearby symbols
-		},
 	},
 	-- allows extending the providers array elsewhere in your config
 	-- without having to redefine it
