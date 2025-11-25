@@ -515,6 +515,7 @@ require("lazy").setup({
 						end
 						local config = servers[server_name] or {}
 						config.capabilities = capabilities
+						config.autostart = false
 						require("lspconfig")[server_name].setup(config)
 					end,
 				},

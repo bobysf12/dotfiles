@@ -3,7 +3,7 @@
 # Define packages
 packages="stow zsh neovim tmux git fzf eza duf fastfetch lazygit watson thefuck zoxide ripgrep slides bat fd-find htop tree curl jq gh delta glow micro ncdu ranger"
 termux_packages="zsh neovim tmux git fzf zoxide ripgrep bat fd htop tree curl jq gh micro ncdu ranger openssh"
-stow_folders="zsh nvim tmux ghostty yazi tmux-sessionizer bin"
+stow_folders="zsh nvim tmux ghostty yazi tmux-sessionizer bin opencode"
 
 # Install dependencies
 if [[ -n "$PREFIX" ]] && [[ "$PREFIX" == *"com.termux"* ]]; then

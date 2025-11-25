@@ -1,8 +1,18 @@
 return {
 	"pmizio/typescript-tools.nvim",
 	dependencies = { "nvim-lua/plenary.nvim", "neovim/nvim-lspconfig" },
-	ft = { "typescript", "typescriptreact", "javascript", "javascriptreact" },
+	lazy = true,
+	keys = {
+		{
+			"<leader>ls",
+			function()
+				vim.cmd("LspStart")
+			end,
+			desc = "[L]SP [S]tart",
+		},
+	},
 	opts = {
+		autostart = false,
 		on_attach = function(client, bufnr)
 			client.server_capabilities.documentFormattingProvider = false
 			client.server_capabilities.documentRangeFormattingProvider = false
