@@ -1,7 +1,8 @@
 return {
 	"saghen/blink.cmp",
-	-- optional: provides snippets for the snippet source
-	-- dependencies = "rafamadriz/friendly-snippets",
+	dependencies = {
+		"rafamadriz/friendly-snippets", -- Common TypeScript/JS snippets
+	},
 
 	-- use a release tag to download pre-built binaries
 	version = "v1.*",
@@ -26,9 +27,29 @@ return {
 			nerd_font_variant = "mono",
 		},
 
-		-- (Default) Only show the documentation popup when manually triggered
 		completion = {
-			documentation = { auto_show = false },
+			-- ENHANCEMENT: Auto-show docs with debounce
+			documentation = {
+				auto_show = true,
+				auto_show_delay_ms = 500, -- Show after 500ms of hovering
+			},
+
+			-- PERFORMANCE: Smart triggers for better UX
+			trigger = {
+				show_on_insert_on_trigger_character = true,
+			},
+
+			-- PERFORMANCE: Limit items for huge completion lists
+			list = {
+				max_items = 200, -- Prevents slowdown on massive lists
+			},
+
+			menu = {
+				-- ENHANCEMENT: Better visual selection
+				draw = {
+					columns = { { "label", "label_description", gap = 1 }, { "kind_icon", "kind" } },
+				},
+			},
 		},
 
 		-- default list of enabled providers defined so that you can extend it
@@ -44,11 +65,37 @@ return {
 					-- make lazydev completions top priority (see `:h blink.cmp`)
 					score_offset = 100,
 				},
+
+				-- PERFORMANCE: Configure LSP source
+				lsp = {
+					name = "LSP",
+					-- OPTIMIZATION: Async fetching with timeout
+					timeout_ms = 1000,
+				},
+
+				-- PERFORMANCE: Buffer source optimization
+				buffer = {
+					name = "Buffer",
+					max_items = 5, -- Limit buffer completions
+					min_keyword_length = 3, -- Don't complete on 1-2 chars
+				},
 			},
 		},
 
-		-- experimental signature help support
-		-- signature = { enabled = true }
+		-- ENHANCEMENT: Enable signature help (fast in blink!)
+		signature = {
+			enabled = true,
+			window = {
+				border = "rounded",
+			},
+		},
+
+		-- PERFORMANCE: Fuzzy matching settings
+		fuzzy = {
+			use_typo_resistance = true,
+			use_frecency = true, -- Learn your most-used completions
+			use_proximity = true, -- Boost nearby symbols
+		},
 	},
 	-- allows extending the providers array elsewhere in your config
 	-- without having to redefine it
