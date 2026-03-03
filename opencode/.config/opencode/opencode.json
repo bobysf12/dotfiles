@@ -8,7 +8,7 @@
             "model": "openai/gpt-5.3-codex"
         },
         "explore": {
-            "model": "opencode/kimi-k2.5-free"
+            "model": "opencode/minimax-m2.5-free"
         },
         "general": {
             "model": "openai/gpt-5.3-codex"
