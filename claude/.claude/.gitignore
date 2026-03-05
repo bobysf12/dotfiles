@@ -1,0 +1,19 @@
+# Runtime/cache data - not tracked
+backups/
+cache/
+debug/
+downloads/
+file-history/
+plans/
+plugins/
+projects/
+session-env/
+shell-snapshots/
+statsig/
+tasks/
+telemetry/
+todos/
+history.jsonl
+mcp-needs-auth-cache.json
+settings.json.bak
+stats-cache.json
