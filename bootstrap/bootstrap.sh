@@ -204,8 +204,7 @@ component_supported() {
 bootstrap_oh_my_zsh() {
     if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
         info "Installing Oh My Zsh"
-        run_shell "RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c \"\
-            \\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\""
+        run_shell "tmp=\$(mktemp) && curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o \"\$tmp\" && RUNZSH=no CHSH=no KEEP_ZSHRC=yes bash \"\$tmp\" && rm -f \"\$tmp\""
     fi
 
     local custom_plugins="$HOME/.oh-my-zsh/custom/plugins"
