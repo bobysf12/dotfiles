@@ -28,6 +28,16 @@ Cross-platform bootstrap scripts for this dotfiles repo.
 
 `ubuntu-prod` is intentionally slim and skips language runtimes/tooling (Node, Bun, Python, Neovim).
 
+Claude Code and OpenCode CLIs are installed automatically as part of the `node` component on:
+
+- macOS (all profiles that include `node`)
+- Ubuntu `ubuntu-dev` profile
+
+Installers used:
+
+- `curl -fsSL https://claude.ai/install.sh | bash`
+- `curl -fsSL https://opencode.ai/install | bash`
+
 ## Common commands
 
 ```bash

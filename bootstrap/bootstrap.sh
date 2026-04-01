@@ -270,6 +270,28 @@ bootstrap_bun() {
     run_shell "curl -fsSL https://bun.sh/install | bash"
 }
 
+bootstrap_claude() {
+    if has_cmd claude; then
+        return
+    fi
+    run_shell "curl -fsSL https://claude.ai/install.sh | bash"
+}
+
+bootstrap_opencode() {
+    if has_cmd opencode; then
+        return
+    fi
+    run_shell "curl -fsSL https://opencode.ai/install | bash"
+}
+
+bootstrap_ai_clis() {
+    if [[ "$PLATFORM" == "mac" || "$PROFILE" == "ubuntu-dev" ]]; then
+        info "Installing Claude and OpenCode CLIs"
+        bootstrap_claude
+        bootstrap_opencode
+    fi
+}
+
 install_nvim_tooling() {
     if ! has_cmd nvim; then
         warn "Neovim not installed, skipping Neovim tooling"
@@ -457,6 +479,7 @@ install_component_qol() {
 install_component_node() {
     info "Installing Node environment"
     bootstrap_nvm
+    bootstrap_ai_clis
 }
 
 install_component_python() {
@@ -593,6 +616,9 @@ Options:
 
 Components:
   core shell tmux nvim stow qol node python server-defaults bun docker tailscale
+
+Notes:
+  node also installs Claude Code and OpenCode CLIs on macOS and ubuntu-dev.
 EOF
 }
 
