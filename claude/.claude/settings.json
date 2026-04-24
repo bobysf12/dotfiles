@@ -1,3 +1,4 @@
 {
-  "model": "sonnet"
+  "skipDangerousModePermissionPrompt": true,
+  "includeCoAuthoredBy": false
 }
