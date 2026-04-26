@@ -405,7 +405,7 @@ require("lazy").setup({
 	{
 		"neovim/nvim-lspconfig",
 		dependencies = {
-			{ "williamboman/mason.nvim", config = true },
+			{ "williamboman/mason.nvim", config = true, cmd = "Mason" },
 			"williamboman/mason-lspconfig.nvim",
 			"WhoIsSethDaniel/mason-tool-installer.nvim",
 			{ "j-hui/fidget.nvim", opts = {} },
@@ -481,6 +481,14 @@ require("lazy").setup({
 						},
 					},
 				},
+				eslint = {
+					settings = {
+						-- Run ESLint on save; tweak to "onType" if you want live feedback
+						run = "onSave",
+						-- Apply all eslint --fix actions on save
+						format = false,
+					},
+				},
 			}
 
 			-- Tools to ensure installed
@@ -522,10 +530,46 @@ require("lazy").setup({
 				mode = "",
 				desc = "[F]ormat buffer",
 			},
+			{
+				"<leader>uf",
+				function()
+					vim.g.autoformat = not vim.g.autoformat
+					vim.notify(
+						"Autoformat on save: " .. (vim.g.autoformat and "ON" or "OFF"),
+						vim.log.levels.INFO
+					)
+				end,
+				desc = "Toggle [A]uto[F]ormat on save",
+			},
 		},
+		init = function()
+			-- Default: format-on-save OFF. Toggle with <leader>uf or :FormatToggle.
+			if vim.g.autoformat == nil then
+				vim.g.autoformat = false
+			end
+
+			vim.api.nvim_create_user_command("FormatToggle", function()
+				vim.g.autoformat = not vim.g.autoformat
+				vim.notify(
+					"Autoformat on save: " .. (vim.g.autoformat and "ON" or "OFF"),
+					vim.log.levels.INFO
+				)
+			end, {})
+			vim.api.nvim_create_user_command("FormatEnable", function()
+				vim.g.autoformat = true
+				vim.notify("Autoformat on save: ON", vim.log.levels.INFO)
+			end, {})
+			vim.api.nvim_create_user_command("FormatDisable", function()
+				vim.g.autoformat = false
+				vim.notify("Autoformat on save: OFF", vim.log.levels.INFO)
+			end, {})
+		end,
 		opts = {
 			notify_on_error = true,
 			format_on_save = function(bufnr)
+				if not vim.g.autoformat then
+					return nil
+				end
 				-- Disable "format_on_save lsp_fallback" for languages that don't
 				-- have a well standardized coding style. You can add additional
 				-- languages here or re-enable it for the disabled ones.
@@ -537,19 +581,35 @@ require("lazy").setup({
 					lsp_format_opt = "fallback"
 				end
 				return {
-					timeout_ms = 500,
+					timeout_ms = 2000,
 					lsp_format = lsp_format_opt,
 				}
 			end,
 			log_level = vim.log.levels.DEBUG,
+			formatters = {
+				-- Prefer project-local prettier (node_modules/.bin) so the project's
+				-- prettier version, .prettierrc, and plugins (e.g. tailwindcss) are
+				-- respected. Falls back to a global prettier if none is installed.
+				prettier = {
+					prefer_local = "node_modules/.bin",
+				},
+			},
 			formatters_by_ft = {
 				lua = { "stylua" },
 				-- Conform can also run multiple formatters sequentially
 				-- python = { "isort", "black" },
 				--
-				javascript = { "prettierd", stop_after_first = true },
-				typescript = { "prettierd", stop_after_first = true },
-				typescriptreact = { "prettierd", stop_after_first = true },
+				javascript = { "prettier", stop_after_first = true },
+				javascriptreact = { "prettier", stop_after_first = true },
+				typescript = { "prettier", stop_after_first = true },
+				typescriptreact = { "prettier", stop_after_first = true },
+				json = { "prettier", stop_after_first = true },
+				jsonc = { "prettier", stop_after_first = true },
+				yaml = { "prettier", stop_after_first = true },
+				css = { "prettier", stop_after_first = true },
+				scss = { "prettier", stop_after_first = true },
+				html = { "prettier", stop_after_first = true },
+				markdown = { "prettier", stop_after_first = true },
 			},
 		},
 	},
