@@ -159,6 +159,10 @@ vim.opt.rtp:prepend(lazypath)
 --  To update plugins you can run
 --    :Lazy update
 --
+-- Global LSP keymaps and user commands. Loaded directly (not as a plugin spec)
+-- so it does not conflict with the nvim-lspconfig declaration below.
+require("custom.lsp_keymaps")
+
 -- NOTE: Here is where you install your plugins.
 require("lazy").setup({
 	-- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
@@ -490,6 +494,24 @@ require("lazy").setup({
 					},
 				},
 			}
+
+			-- Pyright is installed globally via npm; register it with the
+			-- 0.11+ vim.lsp API so it does not go through Mason and does not
+			-- rely on the deprecated `require('lspconfig').<name>` framework.
+			-- Not calling vim.lsp.enable() here keeps it lazy — <leader>ls
+			-- (see lua/custom/lsp_keymaps.lua) enables it on demand.
+			vim.lsp.config("pyright", {
+				capabilities = capabilities,
+				settings = {
+					python = {
+						analysis = {
+							autoSearchPaths = true,
+							useLibraryCodeForTypes = true,
+							diagnosticMode = "workspace",
+						},
+					},
+				},
+			})
 
 			-- Tools to ensure installed
 			local ensure_installed = vim.tbl_keys(servers)
