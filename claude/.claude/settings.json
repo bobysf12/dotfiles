@@ -1,4 +1,8 @@
 {
+  "includeCoAuthoredBy": false,
   "skipDangerousModePermissionPrompt": true,
-  "includeCoAuthoredBy": false
+  "skipAutoPermissionPrompt": true,
+  "permissions": {
+    "defaultMode": "auto"
+  }
 }
