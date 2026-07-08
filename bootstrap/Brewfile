@@ -1,0 +1,46 @@
+# Homebrew bundle for macOS. Install with: brew bundle --file bootstrap/Brewfile
+# bootstrap.sh runs this automatically via the mac-only `brew` component.
+
+tap "nikitabobko/tap" # aerospace
+
+# Core CLI
+brew "git"
+brew "curl"
+brew "jq"
+brew "ripgrep"
+brew "fzf"
+brew "fd"
+brew "bat"
+brew "tree"
+brew "stow"
+brew "gh"
+brew "git-delta"
+
+# Shell
+brew "zsh"
+brew "zoxide"
+brew "eza"
+
+# Editor / multiplexer
+brew "tmux"
+brew "neovim"
+brew "make"
+
+# Quality of life
+brew "lazygit"
+brew "btop"
+brew "fastfetch"
+brew "ncdu"
+brew "yazi"
+
+# Dev tooling
+brew "colima"    # docker runtime
+brew "pyenv"     # python version manager
+brew "tailscale"
+
+# GUI apps
+cask "aerospace" # window manager
+cask "ghostty"   # terminal
+cask "font-symbols-only-nerd-font"
+cask "bitwarden"
+cask "raycast"

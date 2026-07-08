@@ -1,0 +1,3 @@
+# Never commit real secrets — use zsh/.zshenv.example as the template.
+.zshenv
+zsh/.zshenv

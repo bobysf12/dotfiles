@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 PROFILE="default"
 PLATFORM="auto"
 WITH_COMPONENTS=""
@@ -187,6 +189,10 @@ component_supported() {
         core|shell|tmux|nvim|stow|qol|node|python)
             return 0
             ;;
+        brew)
+            [[ "$PLATFORM" == "mac" ]]
+            return
+            ;;
         server-defaults)
             [[ "$PLATFORM" == "ubuntu" ]]
             return
@@ -299,9 +305,9 @@ install_nvim_tooling() {
     fi
 
     if has_cmd npm; then
-        run_cmd npm install -g intelephense prettier @fsouza/prettierd
+        run_cmd npm install -g intelephense prettier @fsouza/prettierd pyright
     else
-        warn "npm not found, skipping npm-based Neovim tools (intelephense, prettier, prettierd)"
+        warn "npm not found, skipping npm-based Neovim tools (intelephense, prettier, prettierd, pyright)"
     fi
 
     info "Bootstrapping Neovim plugins and Mason tools"
@@ -339,6 +345,21 @@ apply_stow() {
             run_cmd stow -R "$d"
         fi
     done
+}
+
+install_component_brew_bundle() {
+    if [[ "$PLATFORM" != "mac" ]]; then
+        return
+    fi
+
+    local brewfile="$SCRIPT_DIR/Brewfile"
+    if [[ ! -f "$brewfile" ]]; then
+        warn "Brewfile not found at $brewfile, skipping brew bundle"
+        return
+    fi
+
+    info "Installing Homebrew bundle (formulae + casks) from $brewfile"
+    run_cmd brew bundle --file "$brewfile" || warn "brew bundle reported errors"
 }
 
 install_component_core() {
@@ -476,10 +497,16 @@ install_component_qol() {
     esac
 }
 
+install_node_globals() {
+    info "Installing global Node CLIs (yarn, agent-browser, @playwright/cli)"
+    run_shell "export NVM_DIR=\"$HOME/.nvm\"; [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"; if command -v npm >/dev/null 2>&1; then npm install -g yarn agent-browser @playwright/cli; else echo 'npm not found, skipping node globals'; fi"
+}
+
 install_component_node() {
     info "Installing Node environment"
     bootstrap_nvm
     bootstrap_ai_clis
+    install_node_globals
 }
 
 install_component_python() {
@@ -583,10 +610,10 @@ profile_components() {
             echo "core shell tmux nvim stow"
             ;;
         default)
-            echo "core shell tmux nvim stow qol node python server-defaults"
+            echo "brew core shell tmux nvim stow qol node python bun server-defaults"
             ;;
         full)
-            echo "core shell tmux nvim stow qol node python server-defaults bun docker tailscale"
+            echo "brew core shell tmux nvim stow qol node python server-defaults bun docker tailscale"
             ;;
         ubuntu-dev)
             echo "core shell tmux nvim stow qol node python server-defaults bun docker tailscale"
@@ -615,9 +642,10 @@ Options:
   -h, --help                        Show help
 
 Components:
-  core shell tmux nvim stow qol node python server-defaults bun docker tailscale
+  brew core shell tmux nvim stow qol node python server-defaults bun docker tailscale
 
 Notes:
+  brew (macOS only) installs formulae + casks from bootstrap/Brewfile via `brew bundle`.
   node also installs Claude Code and OpenCode CLIs on macOS and ubuntu-dev.
 EOF
 }
@@ -725,6 +753,7 @@ main() {
 
     for c in "${final[@]}"; do
         case "$c" in
+            brew) install_component_brew_bundle ;;
             core) install_component_core ;;
             shell) install_component_shell ;;
             tmux) install_component_tmux ;;

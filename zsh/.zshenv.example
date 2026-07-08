@@ -1,0 +1,8 @@
+# Copy to ~/.zshenv and fill in real values. NOT tracked in git (contains secrets).
+# Sourced by ~/.zshrc.
+
+export OPENAI_API_KEY=
+export GEMINI_API_KEY=
+export GITHUB_USER_TOKEN=
+export GITHUB_USER_TOKEN_CLASSIC=
+export GITHUB_TOKEN=

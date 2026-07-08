@@ -19,10 +19,14 @@ Cross-platform bootstrap scripts for this dotfiles repo.
 ## Profiles
 
 - `minimal`: `core shell tmux nvim stow`
-- `default`: `core shell tmux nvim stow qol node python server-defaults`
-- `full`: `core shell tmux nvim stow qol node python server-defaults bun docker tailscale`
+- `default`: `brew core shell tmux nvim stow qol node python bun server-defaults`
+- `full`: `brew core shell tmux nvim stow qol node python server-defaults bun docker tailscale`
 - `ubuntu-dev`: `core shell tmux nvim stow qol node python server-defaults bun docker tailscale`
 - `ubuntu-prod`: `core shell tmux stow server-defaults docker tailscale`
+
+`brew` is macOS-only and installs all formulae and casks from `bootstrap/Brewfile`
+via `brew bundle` (GUI apps: Aerospace, Ghostty, nerd font, Bitwarden, Raycast).
+Edit `bootstrap/Brewfile` to change the macOS package set.
 
 `server-defaults` is Ubuntu-only and installs baseline server hardening tools (`ufw`, `fail2ban`, `unattended-upgrades`, `apt-listchanges`).
 
@@ -82,6 +86,16 @@ Useful remote options:
 - `--repo` (override local origin URL)
 - `--dest` (remote clone path, default `~/dotfiles`)
 - `--branch`
+
+## Secrets (manual step)
+
+`~/.zshenv` holds API keys/tokens and is **not** tracked in git. On a new machine,
+copy the template and fill in real values:
+
+```bash
+cp ~/dotfiles/zsh/.zshenv.example ~/.zshenv
+$EDITOR ~/.zshenv
+```
 
 ## Improvements backlog
 
