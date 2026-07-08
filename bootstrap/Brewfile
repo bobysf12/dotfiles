@@ -39,8 +39,9 @@ brew "pyenv"     # python version manager
 brew "tailscale"
 
 # GUI apps
-cask "aerospace" # window manager
-cask "ghostty"   # terminal
+cask "aerospace"          # window manager
+cask "karabiner-elements" # keyboard customizer
+cask "ghostty"            # terminal
 cask "font-symbols-only-nerd-font"
 cask "bitwarden"
 cask "1password"
