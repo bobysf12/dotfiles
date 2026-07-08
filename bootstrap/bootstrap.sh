@@ -358,6 +358,15 @@ install_component_brew_bundle() {
         return
     fi
 
+    # Homebrew 6+ can require explicit trust for non-official taps ($HOMEBREW_REQUIRE_TAP_TRUST).
+    if brew trust --help >/dev/null 2>&1; then
+        local tap_name
+        while IFS= read -r tap_name; do
+            [[ -z "$tap_name" ]] && continue
+            run_cmd brew trust --tap "$tap_name" || warn "Could not trust tap: $tap_name"
+        done < <(grep -E '^[[:space:]]*tap[[:space:]]' "$brewfile" | sed -E 's/.*tap[[:space:]]+"([^"]+)".*/\1/')
+    fi
+
     info "Installing Homebrew bundle (formulae + casks) from $brewfile"
     run_cmd brew bundle --file "$brewfile" || warn "brew bundle reported errors"
 }
