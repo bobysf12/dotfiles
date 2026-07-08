@@ -43,4 +43,5 @@ cask "aerospace" # window manager
 cask "ghostty"   # terminal
 cask "font-symbols-only-nerd-font"
 cask "bitwarden"
+cask "1password"
 cask "raycast"
